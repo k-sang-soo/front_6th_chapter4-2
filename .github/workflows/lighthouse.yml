@@ -42,15 +42,44 @@ jobs:
 
       - name: Start preview server
         run: |
-          pnpm preview &
-          sleep 5
+          echo "🚀 Starting preview server..."
+          pnpm preview --host 0.0.0.0 --port 4173 &
+          SERVER_PID=$!
+          echo "Server PID: $SERVER_PID"
+
+          # 서버가 준비될 때까지 기다리기
+          echo "Waiting for server to be ready..."
+          for i in {1..30}; do
+            if curl -s http://localhost:4173 > /dev/null; then
+              echo "✅ Server is ready!"
+              break
+            fi
+            echo "Waiting... ($i/30)"
+            sleep 2
+          done
+
+          # 최종 확인
+          curl -I http://localhost:4173 || echo "❌ Server still not responding"
 
       - name: Run Lighthouse CI
         id: lighthouse
         continue-on-error: true
         run: |
+          echo "🔍 Starting Lighthouse CI..."
           URL="${{ github.event.inputs.url || 'http://localhost:4173' }}"
-          lhci autorun --collect.url=$URL
+          echo "Testing URL: $URL"
+
+          # 서버가 응답하는지 확인
+          echo "Testing server response..."
+          curl -I $URL || echo "❌ Server not responding"
+
+          # Lighthouse CI 실행
+          echo "Running Lighthouse CI..."
+          lhci autorun --collect.url=$URL --verbose
+
+          # 결과 파일 확인
+          echo "Checking generated files..."
+          ls -la .lighthouseci/ || echo "No .lighthouseci directory found"
 
       - name: Create GitHub Issue with Results
         if: always()
