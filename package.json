@@ -9,7 +9,10 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
     "build": "tsc -b && vite build",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --check .",
+    "format:fix": "prettier --write --list-different ."
   },
   "dependencies": {
     "@chakra-ui/icons": "2.2.4",
@@ -37,11 +40,14 @@
     "@vitest/coverage-v8": "^2.0.3",
     "@vitest/ui": "^1.6.0",
     "eslint": "^8.57.0",
+    "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-hooks": "^4.6.2",
     "eslint-plugin-react-refresh": "^0.4.7",
+    "prettier": "3.6.2",
     "tsx": "^4.17.0",
     "typescript": "^5.4.5",
     "vite": "npm:rolldown-vite@latest",
     "vitest": "latest"
-  }
+  },
+  "packageManager": "pnpm@10.15.0+sha512.486ebc259d3e999a4e8691ce03b5cac4a71cbeca39372a9b762cb500cfdf0873e2cb16abe3d951b1ee2cf012503f027b98b6584e4df22524e0c7450d9ec7aa7b"
 }
