@@ -60,7 +60,7 @@ jobs:
           script: |
             const fs = require('fs');
             const path = require('path');
-            
+
             const lhciDir = '.lighthouseci';
             const jsonReports = fs.readdirSync(lhciDir).filter(f => f.endsWith('.json'));
             const latestReport = jsonReports.sort().reverse()[0];
@@ -70,16 +70,16 @@ jobs:
             const formatScore = (value = 0) => {
               return Math.round(value * 100);
             };
-            
+
             const getEmoji = (value, metric) => {
               const thresholds = {
                 LCP: { good: 2500, needsImprovement: 4000 },
                 INP: { good: 200, needsImprovement: 500 },
                 CLS: { good: 0.1, needsImprovement: 0.25 },
               };
-            
+
               if (!thresholds[metric]) return value >= 90 ? '🟢' : value >= 50 ? '🟠' : '🔴';
-            
+
               const t = thresholds[metric];
               return value <= t.good ? '🟢' : value <= t.needsImprovement ? '🟠' : '🔴';
             };
@@ -119,9 +119,9 @@ jobs:
               INP: getMetricValue(report, 'experimental-interaction-to-next-paint'),
               CLS: getMetricValue(report, 'cumulative-layout-shift')
             };
-            
+
             const reportUrl = `.lighthouseci/${latestReport.replace('.json', '.html')}`;
-            
+
             const body = `## 🚨 웹사이트 성능 측정 결과
 
             ### 🎯 Lighthouse 점수
@@ -145,19 +145,19 @@ jobs:
               - 🟢 Good: < 2.5s
               - 🟠 Needs Improvement: < 4.0s
               - 🔴 Poor: ≥ 4.0s
-            
+
             - **INP (Interaction to Next Paint)**: 사용자 상호작용에 대한 전반적인 응답성
               - 🟢 Good: < 200ms
               - 🟠 Needs Improvement: < 500ms
               - 🔴 Poor: ≥ 500ms
-            
+
             - **CLS (Cumulative Layout Shift)**: 페이지 로드 중 예기치 않은 레이아웃 변경의 정도
               - 🟢 Good: < 0.1
               - 🟠 Needs Improvement: < 0.25
               - 🔴 Poor: ≥ 0.25
 
             > 📅 측정 시간: ${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}`;
-            
+
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
