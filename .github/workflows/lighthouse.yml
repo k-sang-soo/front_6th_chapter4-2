@@ -62,8 +62,30 @@ jobs:
             const path = require('path');
 
             const lhciDir = '.lighthouseci';
-            const jsonReports = fs.readdirSync(lhciDir).filter(f => f.endsWith('.json'));
+
+            // 디버깅: 디렉토리 존재 확인
+            console.log('Checking .lighthouseci directory...');
+            if (!fs.existsSync(lhciDir)) {
+              console.log('❌ .lighthouseci directory does not exist');
+              console.log('Available files in current directory:', fs.readdirSync('.'));
+              return;
+            }
+
+            // 디버깅: 파일 목록 확인
+            const allFiles = fs.readdirSync(lhciDir);
+            console.log('Files in .lighthouseci:', allFiles);
+
+            const jsonReports = allFiles.filter(f => f.endsWith('.json'));
+            console.log('JSON reports found:', jsonReports);
+
+            if (jsonReports.length === 0) {
+              console.log('❌ No JSON reports found in .lighthouseci directory');
+              return;
+            }
+
             const latestReport = jsonReports.sort().reverse()[0];
+            console.log('Using report:', latestReport);
+
             const reportPath = path.join(lhciDir, latestReport);
             const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
 
