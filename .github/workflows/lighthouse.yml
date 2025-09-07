@@ -42,15 +42,36 @@ jobs:
 
       - name: Start preview server
         run: |
-          pnpm preview --host 0.0.0.0 &
+          echo "🚀 Starting preview server..."
+          pnpm preview --host 0.0.0.0 --port 4173 &
           sleep 10
+
+          # 서버 상태 확인
+          echo "Checking server status..."
+          curl -I http://localhost:4173 || echo "❌ Server not responding"
+
+          # 프로세스 확인
+          echo "Checking running processes..."
+          ps aux | grep vite || echo "No vite process found"
 
       - name: Run Lighthouse CI
         id: lighthouse
         continue-on-error: true
         run: |
+          echo "🔍 Starting Lighthouse CI..."
           URL="${{ github.event.inputs.url || 'http://localhost:4173' }}"
-          lhci autorun --collect.url=$URL
+          echo "Testing URL: $URL"
+
+          # 서버 재확인
+          curl -I $URL || echo "❌ Server not responding before Lighthouse"
+
+          # Lighthouse CI 실행
+          echo "Running Lighthouse CI..."
+          lhci autorun --collect.url=$URL --verbose
+
+          # 결과 확인
+          echo "Lighthouse CI exit code: $?"
+          ls -la .lighthouseci/ || echo "No .lighthouseci directory"
 
       - name: Create GitHub Issue with Results
         if: always()
