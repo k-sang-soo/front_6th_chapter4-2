@@ -42,44 +42,15 @@ jobs:
 
       - name: Start preview server
         run: |
-          echo "🚀 Starting preview server..."
-          pnpm preview --host 0.0.0.0 --port 4173 &
-          SERVER_PID=$!
-          echo "Server PID: $SERVER_PID"
-
-          # 서버가 준비될 때까지 기다리기
-          echo "Waiting for server to be ready..."
-          for i in {1..30}; do
-            if curl -s http://localhost:4173 > /dev/null; then
-              echo "✅ Server is ready!"
-              break
-            fi
-            echo "Waiting... ($i/30)"
-            sleep 2
-          done
-
-          # 최종 확인
-          curl -I http://localhost:4173 || echo "❌ Server still not responding"
+          pnpm preview &
+          sleep 5
 
       - name: Run Lighthouse CI
         id: lighthouse
         continue-on-error: true
         run: |
-          echo "🔍 Starting Lighthouse CI..."
           URL="${{ github.event.inputs.url || 'http://localhost:4173' }}"
-          echo "Testing URL: $URL"
-
-          # 서버가 응답하는지 확인
-          echo "Testing server response..."
-          curl -I $URL || echo "❌ Server not responding"
-
-          # Lighthouse CI 실행
-          echo "Running Lighthouse CI..."
-          lhci autorun --collect.url=$URL --verbose
-
-          # 결과 파일 확인
-          echo "Checking generated files..."
-          ls -la .lighthouseci/ || echo "No .lighthouseci directory found"
+          lhci autorun --collect.url=$URL
 
       - name: Create GitHub Issue with Results
         if: always()
@@ -91,30 +62,8 @@ jobs:
             const path = require('path');
 
             const lhciDir = '.lighthouseci';
-
-            // 디버깅: 디렉토리 존재 확인
-            console.log('Checking .lighthouseci directory...');
-            if (!fs.existsSync(lhciDir)) {
-              console.log('❌ .lighthouseci directory does not exist');
-              console.log('Available files in current directory:', fs.readdirSync('.'));
-              return;
-            }
-
-            // 디버깅: 파일 목록 확인
-            const allFiles = fs.readdirSync(lhciDir);
-            console.log('Files in .lighthouseci:', allFiles);
-
-            const jsonReports = allFiles.filter(f => f.endsWith('.json'));
-            console.log('JSON reports found:', jsonReports);
-
-            if (jsonReports.length === 0) {
-              console.log('❌ No JSON reports found in .lighthouseci directory');
-              return;
-            }
-
+            const jsonReports = fs.readdirSync(lhciDir).filter(f => f.endsWith('.json'));
             const latestReport = jsonReports.sort().reverse()[0];
-            console.log('Using report:', latestReport);
-
             const reportPath = path.join(lhciDir, latestReport);
             const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
 
