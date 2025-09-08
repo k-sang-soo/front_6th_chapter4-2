@@ -73,6 +73,18 @@ jobs:
           echo "Lighthouse CI exit code: $?"
           ls -la .lighthouseci/ || echo "No .lighthouseci directory"
 
+          # 생성된 JSON 파일 내용 확인 (디버깅용)
+          if [ -d ".lighthouseci" ]; then
+            echo "📊 Generated files:"
+            for file in .lighthouseci/*.json; do
+              if [ -f "$file" ]; then
+                echo "=== Content of $file ==="
+                head -50 "$file"
+                echo "========================"
+              fi
+            done
+          fi
+
       - name: Create GitHub Issue with Results
         if: always()
         uses: actions/github-script@v6
@@ -84,9 +96,20 @@ jobs:
 
             const lhciDir = '.lighthouseci';
             const jsonReports = fs.readdirSync(lhciDir).filter(f => f.endsWith('.json'));
+            console.log('📂 Available JSON reports:', jsonReports);
+
             const latestReport = jsonReports.sort().reverse()[0];
+            console.log('📄 Using report:', latestReport);
+
             const reportPath = path.join(lhciDir, latestReport);
             const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+
+            // 디버깅: 리포트 구조 확인
+            console.log('🔍 Report structure check:');
+            console.log('- categories keys:', Object.keys(report.categories || {}));
+            console.log('- audits keys:', Object.keys(report.audits || {}).slice(0, 10));
+            console.log('- performance score:', report.categories?.performance?.score);
+            console.log('- LCP value:', report.audits?.['largest-contentful-paint']?.numericValue);
 
             const formatScore = (value = 0) => {
               return Math.round(value * 100);
