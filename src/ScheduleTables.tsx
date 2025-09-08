@@ -2,31 +2,62 @@ import { Button, ButtonGroup, Flex, Heading, Stack } from '@chakra-ui/react';
 import ScheduleTable from './ScheduleTable.tsx';
 import { useScheduleContext } from './ScheduleContext.tsx';
 import SearchDialog from './SearchDialog.tsx';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
+
+interface TimeSlotInfo {
+  day?: string;
+  time?: number;
+}
+
+interface SearchInfo extends TimeSlotInfo {
+  tableId: string;
+}
 
 export const ScheduleTables = () => {
   const { schedulesMap, setSchedulesMap } = useScheduleContext();
-  const [searchInfo, setSearchInfo] = useState<{
-    tableId: string;
-    day?: string;
-    time?: number;
-  } | null>(null);
+  const [searchInfo, setSearchInfo] = useState<SearchInfo | null>(null);
 
   const disabledRemoveButton = Object.keys(schedulesMap).length === 1;
 
-  const duplicate = (targetId: string) => {
-    setSchedulesMap((prev) => ({
-      ...prev,
-      [`schedule-${Date.now()}`]: [...prev[targetId]],
-    }));
-  };
+  const openSearchDialog = useCallback((tableId: string, timeInfo: TimeSlotInfo) => {
+    setSearchInfo({ tableId, ...timeInfo });
+  }, []);
 
-  const remove = (targetId: string) => {
-    setSchedulesMap((prev) => {
-      delete prev[targetId];
-      return { ...prev };
-    });
-  };
+  const handleScheduleDelete = useCallback(
+    (tableId: string, { day, time }: TimeSlotInfo) => {
+      setSchedulesMap((prev) => ({
+        ...prev,
+        [tableId]: prev[tableId].filter(
+          (schedule) => schedule.day !== day || !schedule.range.includes(time!),
+        ),
+      }));
+    },
+    [setSchedulesMap],
+  );
+
+  const duplicate = useCallback(
+    (targetId: string) => {
+      setSchedulesMap((prev) => ({
+        ...prev,
+        [`schedule-${Date.now()}`]: [...prev[targetId]],
+      }));
+    },
+    [setSchedulesMap],
+  );
+
+  const remove = useCallback(
+    (targetId: string) => {
+      setSchedulesMap((prev) => {
+        delete prev[targetId];
+        return { ...prev };
+      });
+    },
+    [setSchedulesMap],
+  );
+
+  const handleSearchDialogClose = useCallback(() => {
+    setSearchInfo(null);
+  }, []);
 
   return (
     <>
@@ -57,20 +88,13 @@ export const ScheduleTables = () => {
               key={`schedule-table-${index}`}
               schedules={schedules}
               tableId={tableId}
-              onScheduleTimeClick={(timeInfo) => setSearchInfo({ tableId, ...timeInfo })}
-              onDeleteButtonClick={({ day, time }) =>
-                setSchedulesMap((prev) => ({
-                  ...prev,
-                  [tableId]: prev[tableId].filter(
-                    (schedule) => schedule.day !== day || !schedule.range.includes(time),
-                  ),
-                }))
-              }
+              onScheduleTimeClick={(timeInfo) => openSearchDialog(tableId, timeInfo)}
+              onDeleteButtonClick={(timeInfo) => handleScheduleDelete(tableId, timeInfo)}
             />
           </Stack>
         ))}
       </Flex>
-      <SearchDialog searchInfo={searchInfo} onClose={() => setSearchInfo(null)} />
+      <SearchDialog searchInfo={searchInfo} onClose={handleSearchDialogClose} />
     </>
   );
 };
