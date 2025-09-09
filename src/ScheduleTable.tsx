@@ -62,8 +62,6 @@ const ScheduleTable = memo(
       [onDeleteButtonClick],
     );
 
-    console.log('ScheduleTable 렌더');
-
     return (
       <Box
         position="relative"
@@ -149,8 +147,6 @@ const DraggableSchedule = memo(
     const leftIndex = DAY_LABELS.indexOf(day as (typeof DAY_LABELS)[number]);
     const topIndex = range[0] - 1;
     const size = range.length;
-
-    console.log('DraggableSchedule 렌더');
 
     return (
       <Popover>
