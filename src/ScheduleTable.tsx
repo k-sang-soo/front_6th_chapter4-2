@@ -15,9 +15,10 @@ import {
 import { CellSize, DAY_LABELS, 분 } from './constants.ts';
 import { Schedule } from './types.ts';
 import { fill2, parseHnM } from './utils.ts';
-import { useDndContext, useDraggable } from '@dnd-kit/core';
+import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import { ComponentProps, Fragment, memo, useMemo, useCallback } from 'react';
+import { ComponentProps, Fragment, memo, useCallback } from 'react';
+import { useScheduleContext } from './ScheduleContext.tsx';
 
 interface Props {
   tableId: string;
@@ -40,6 +41,8 @@ const TIMES = [
 
 const ScheduleTable = memo(
   ({ tableId, schedules, onScheduleTimeClick, onDeleteButtonClick }: Props) => {
+    const { activeTableId } = useScheduleContext();
+
     const getColor = useCallback(
       (lectureId: string): string => {
         const lectures = [...new Set(schedules.map(({ lecture }) => lecture.id))];
@@ -48,16 +51,6 @@ const ScheduleTable = memo(
       },
       [schedules],
     );
-
-    const dndContext = useDndContext();
-
-    const activeTableId = useMemo(() => {
-      const activeId = dndContext.active?.id;
-      if (activeId) {
-        return String(activeId).split(':')[0];
-      }
-      return null;
-    }, [dndContext.active?.id]);
 
     const handleDeleteButtonClick = useCallback(
       (schedule: Schedule) => {

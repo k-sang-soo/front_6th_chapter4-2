@@ -5,6 +5,8 @@ import dummyScheduleMap from './dummyScheduleMap.ts';
 interface ScheduleContextType {
   schedulesMap: Record<string, Schedule[]>;
   setSchedulesMap: React.Dispatch<React.SetStateAction<Record<string, Schedule[]>>>;
+  activeTableId: string | null;
+  setActiveTableId: (id: string | null) => void;
 }
 
 const ScheduleContext = createContext<ScheduleContextType | undefined>(undefined);
@@ -19,13 +21,16 @@ export const useScheduleContext = () => {
 
 export const ScheduleProvider = ({ children }: PropsWithChildren) => {
   const [schedulesMap, setSchedulesMap] = useState<Record<string, Schedule[]>>(dummyScheduleMap);
+  const [activeTableId, setActiveTableId] = useState<string | null>(null);
 
   const contextValue = useMemo(
     () => ({
       schedulesMap,
       setSchedulesMap,
+      activeTableId,
+      setActiveTableId,
     }),
-    [schedulesMap],
+    [schedulesMap, activeTableId],
   );
 
   return <ScheduleContext.Provider value={contextValue}>{children}</ScheduleContext.Provider>;
