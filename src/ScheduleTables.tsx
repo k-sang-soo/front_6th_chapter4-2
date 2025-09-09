@@ -85,7 +85,7 @@ export const ScheduleTables = () => {
               </ButtonGroup>
             </Flex>
             <ScheduleTable
-              key={`schedule-table-${index}`}
+              key={`schedule-table-${tableId}`}
               schedules={schedules}
               tableId={tableId}
               onScheduleTimeClick={(timeInfo) => openSearchDialog(tableId, timeInfo)}

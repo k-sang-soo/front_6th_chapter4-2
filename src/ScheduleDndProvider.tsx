@@ -2,6 +2,7 @@ import { DndContext, Modifier, PointerSensor, useSensor, useSensors } from '@dnd
 import { PropsWithChildren, useCallback } from 'react';
 import { CellSize, DAY_LABELS } from './constants.ts';
 import { useScheduleContext } from './ScheduleContext.tsx';
+import { useActiveTable } from './ActiveTableContext.tsx';
 import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core/dist/types';
 
 function createSnapModifier(): Modifier {
@@ -32,7 +33,8 @@ function createSnapModifier(): Modifier {
 const modifiers = [createSnapModifier()];
 
 export default function ScheduleDndProvider({ children }: PropsWithChildren) {
-  const { schedulesMap, setSchedulesMap, setActiveTableId } = useScheduleContext();
+  const { schedulesMap, setSchedulesMap } = useScheduleContext();
+  const { setActiveTableId } = useActiveTable();
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {

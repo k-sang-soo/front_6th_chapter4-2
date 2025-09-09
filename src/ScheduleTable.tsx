@@ -18,7 +18,7 @@ import { fill2, parseHnM } from './utils.ts';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { ComponentProps, Fragment, memo, useCallback } from 'react';
-import { useScheduleContext } from './ScheduleContext.tsx';
+import { useActiveTable } from './ActiveTableContext.tsx';
 
 interface Props {
   tableId: string;
@@ -41,7 +41,7 @@ const TIMES = [
 
 const ScheduleTable = memo(
   ({ tableId, schedules, onScheduleTimeClick, onDeleteButtonClick }: Props) => {
-    const { activeTableId } = useScheduleContext();
+    const { activeTableId } = useActiveTable();
 
     const getColor = useCallback(
       (lectureId: string): string => {
