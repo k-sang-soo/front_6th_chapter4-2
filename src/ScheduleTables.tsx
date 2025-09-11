@@ -3,6 +3,7 @@ import ScheduleTable from './ScheduleTable.tsx';
 import { useScheduleContext } from './ScheduleContext.tsx';
 import SearchDialog from './SearchDialog.tsx';
 import { useCallback, useState } from 'react';
+import ScheduleDndProvider from './ScheduleDndProvider.tsx';
 
 interface TimeSlotInfo {
   day?: string;
@@ -84,13 +85,15 @@ export const ScheduleTables = () => {
                 </Button>
               </ButtonGroup>
             </Flex>
-            <ScheduleTable
-              key={`schedule-table-${tableId}`}
-              schedules={schedules}
-              tableId={tableId}
-              onScheduleTimeClick={(timeInfo) => openSearchDialog(tableId, timeInfo)}
-              onDeleteButtonClick={(timeInfo) => handleScheduleDelete(tableId, timeInfo)}
-            />
+            <ScheduleDndProvider>
+              <ScheduleTable
+                key={`schedule-table-${tableId}`}
+                schedules={schedules}
+                tableId={tableId}
+                onScheduleTimeClick={(timeInfo) => openSearchDialog(tableId, timeInfo)}
+                onDeleteButtonClick={(timeInfo) => handleScheduleDelete(tableId, timeInfo)}
+              />
+            </ScheduleDndProvider>
           </Stack>
         ))}
       </Flex>
