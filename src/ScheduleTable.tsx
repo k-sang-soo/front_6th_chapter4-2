@@ -89,68 +89,84 @@ const ScheduleTableHeader = memo(({ onScheduleTimeClick }: ScheduleTableHeaderPr
 
 ScheduleTableHeader.displayName = 'ScheduleTableHeader';
 
-const ScheduleTable = memo(
-  ({ tableId, schedules, onScheduleTimeClick, onDeleteButtonClick }: Props) => {
-    const getColor = useCallback(
-      (lectureId: string): string => {
-        const lectures = [...new Set(schedules.map(({ lecture }) => lecture.id))];
-        const colors = ['#fdd', '#ffd', '#dff', '#ddf', '#fdf', '#dfd'];
-        return colors[lectures.indexOf(lectureId) % colors.length];
-      },
-      [schedules],
-    );
+const ScheduleTableInner = ({
+  tableId,
+  schedules,
+  onScheduleTimeClick,
+  onDeleteButtonClick,
+}: Props) => {
+  const colorMap = useMemo(() => {
+    const lectures = [...new Set(schedules.map(({ lecture }) => lecture.id))];
+    const colors = ['#fdd', '#ffd', '#dff', '#ddf', '#fdf', '#dfd'];
+    const map: Record<string, string> = {};
+    lectures.forEach((lectureId, index) => {
+      map[lectureId] = colors[index % colors.length];
+    });
+    return map;
+  }, [schedules]);
 
-    const dndContext = useDndContext();
+  const dndContext = useDndContext();
 
-    const activeTableId = useMemo(() => {
-      const activeId = dndContext.active?.id;
-      if (activeId) {
-        return String(activeId).split(':')[0];
-      }
-      return null;
-    }, [dndContext.active?.id]);
+  const isActiveTable = useMemo(() => {
+    const activeId = dndContext.active?.id;
+    if (activeId) {
+      const activeTableId = String(activeId).split(':')[0];
+      return activeTableId === tableId;
+    }
+    return false;
+  }, [dndContext.active?.id, tableId]);
 
-    const handleDeleteButtonClick = useCallback(
-      (schedule: Schedule) => {
-        onDeleteButtonClick?.({
-          day: schedule.day,
-          time: schedule.range[0],
-        });
-      },
-      [onDeleteButtonClick],
-    );
+  const handleDeleteButtonClick = useCallback(
+    (schedule: Schedule) => {
+      onDeleteButtonClick?.({
+        day: schedule.day,
+        time: schedule.range[0],
+      });
+    },
+    [onDeleteButtonClick],
+  );
 
-    return (
-      <Box
-        position="relative"
-        outline={activeTableId === tableId ? '5px dashed' : undefined}
-        outlineColor="blue.300"
+  return (
+    <Box
+      position="relative"
+      outline={isActiveTable ? '5px dashed' : undefined}
+      outlineColor="blue.300"
+    >
+      <Grid
+        templateColumns={`120px repeat(${DAY_LABELS.length}, ${CellSize.WIDTH}px)`}
+        templateRows={`40px repeat(${TIMES.length}, ${CellSize.HEIGHT}px)`}
+        bg="white"
+        fontSize="sm"
+        textAlign="center"
+        outline="1px solid"
+        outlineColor="gray.300"
       >
-        <Grid
-          templateColumns={`120px repeat(${DAY_LABELS.length}, ${CellSize.WIDTH}px)`}
-          templateRows={`40px repeat(${TIMES.length}, ${CellSize.HEIGHT}px)`}
-          bg="white"
-          fontSize="sm"
-          textAlign="center"
-          outline="1px solid"
-          outlineColor="gray.300"
-        >
-          <ScheduleTableHeader onScheduleTimeClick={onScheduleTimeClick} />
-        </Grid>
+        <ScheduleTableHeader onScheduleTimeClick={onScheduleTimeClick} />
+      </Grid>
 
-        {schedules.map((schedule, index) => (
-          <DraggableSchedule
-            key={`${schedule.lecture.id}-${tableId}-${index}`}
-            id={`${tableId}:${index}`}
-            data={schedule}
-            bg={getColor(schedule.lecture.id)}
-            onDeleteButtonClick={() => handleDeleteButtonClick(schedule)}
-          />
-        ))}
-      </Box>
-    );
-  },
-);
+      {schedules.map((schedule, index) => (
+        <DraggableSchedule
+          key={`${schedule.lecture.id}-${tableId}-${index}`}
+          id={`${tableId}:${index}`}
+          data={schedule}
+          bg={colorMap[schedule.lecture.id]}
+          onDeleteButtonClick={() => handleDeleteButtonClick(schedule)}
+        />
+      ))}
+    </Box>
+  );
+};
+
+const ScheduleTable = memo(ScheduleTableInner, (prevProps, nextProps) => {
+  // 실제 props만 비교
+  if (prevProps.tableId !== nextProps.tableId) return false;
+  if (prevProps.schedules !== nextProps.schedules) return false;
+  if (prevProps.onScheduleTimeClick !== nextProps.onScheduleTimeClick) return false;
+  if (prevProps.onDeleteButtonClick !== nextProps.onDeleteButtonClick) return false;
+
+  // 모든 props가 같으면 리렌더링 하지 않음
+  return true;
+});
 
 ScheduleTable.displayName = 'ScheduleTable';
 
@@ -205,6 +221,21 @@ const DraggableSchedule = memo(
         </PopoverContent>
       </Popover>
     );
+  },
+  (prevProps, nextProps) => {
+    // id가 다르면 다른 컴포넌트
+    if (prevProps.id !== nextProps.id) return false;
+
+    // data가 다르면 리렌더링 필요
+    if (prevProps.data !== nextProps.data) return false;
+
+    // bg가 다르면 리렌더링 필요
+    if (prevProps.bg !== nextProps.bg) return false;
+
+    // onDeleteButtonClick는 함수 참조 비교하지 않음 (매번 새로 생성되므로)
+    // 실제로는 같은 동작을 하므로 무시
+
+    return true;
   },
 );
 
