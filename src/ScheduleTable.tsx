@@ -15,10 +15,9 @@ import {
 import { CellSize, DAY_LABELS, 분 } from './constants.ts';
 import { Schedule } from './types.ts';
 import { fill2, parseHnM } from './utils.ts';
-import { useDraggable } from '@dnd-kit/core';
+import { useDndContext, useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import { ComponentProps, Fragment, memo, useCallback } from 'react';
-import { useActiveTable } from './ActiveTableContext.tsx';
+import { ComponentProps, Fragment, memo, useCallback, useMemo } from 'react';
 
 interface Props {
   tableId: string;
@@ -39,10 +38,59 @@ const TIMES = [
     .map((v) => `${parseHnM(v)}~${parseHnM(v + 50 * 분)}`),
 ] as const;
 
+interface ScheduleTableHeaderProps {
+  onScheduleTimeClick?: (timeInfo: { day: string; time: number }) => void;
+}
+
+const ScheduleTableHeader = memo(({ onScheduleTimeClick }: ScheduleTableHeaderProps) => {
+  return (
+    <>
+      <GridItem key="교시" borderColor="gray.300" bg="gray.100">
+        <Flex justifyContent="center" alignItems="center" h="full" w="full">
+          <Text fontWeight="bold">교시</Text>
+        </Flex>
+      </GridItem>
+      {DAY_LABELS.map((day) => (
+        <GridItem key={day} borderLeft="1px" borderColor="gray.300" bg="gray.100">
+          <Flex justifyContent="center" alignItems="center" h="full">
+            <Text fontWeight="bold">{day}</Text>
+          </Flex>
+        </GridItem>
+      ))}
+      {TIMES.map((time, timeIndex) => (
+        <Fragment key={`시간-${timeIndex + 1}`}>
+          <GridItem
+            borderTop="1px solid"
+            borderColor="gray.300"
+            bg={timeIndex > 17 ? 'gray.200' : 'gray.100'}
+          >
+            <Flex justifyContent="center" alignItems="center" h="full">
+              <Text fontSize="xs">
+                {fill2(timeIndex + 1)} ({time})
+              </Text>
+            </Flex>
+          </GridItem>
+          {DAY_LABELS.map((day) => (
+            <GridItem
+              key={`${day}-${timeIndex + 2}`}
+              borderWidth="1px 0 0 1px"
+              borderColor="gray.300"
+              bg={timeIndex > 17 ? 'gray.100' : 'white'}
+              cursor="pointer"
+              _hover={{ bg: 'yellow.100' }}
+              onClick={() => onScheduleTimeClick?.({ day, time: timeIndex + 1 })}
+            />
+          ))}
+        </Fragment>
+      ))}
+    </>
+  );
+});
+
+ScheduleTableHeader.displayName = 'ScheduleTableHeader';
+
 const ScheduleTable = memo(
   ({ tableId, schedules, onScheduleTimeClick, onDeleteButtonClick }: Props) => {
-    const { activeTableId } = useActiveTable();
-
     const getColor = useCallback(
       (lectureId: string): string => {
         const lectures = [...new Set(schedules.map(({ lecture }) => lecture.id))];
@@ -51,6 +99,16 @@ const ScheduleTable = memo(
       },
       [schedules],
     );
+
+    const dndContext = useDndContext();
+
+    const activeTableId = useMemo(() => {
+      const activeId = dndContext.active?.id;
+      if (activeId) {
+        return String(activeId).split(':')[0];
+      }
+      return null;
+    }, [dndContext.active?.id]);
 
     const handleDeleteButtonClick = useCallback(
       (schedule: Schedule) => {
@@ -77,44 +135,7 @@ const ScheduleTable = memo(
           outline="1px solid"
           outlineColor="gray.300"
         >
-          <GridItem key="교시" borderColor="gray.300" bg="gray.100">
-            <Flex justifyContent="center" alignItems="center" h="full" w="full">
-              <Text fontWeight="bold">교시</Text>
-            </Flex>
-          </GridItem>
-          {DAY_LABELS.map((day) => (
-            <GridItem key={day} borderLeft="1px" borderColor="gray.300" bg="gray.100">
-              <Flex justifyContent="center" alignItems="center" h="full">
-                <Text fontWeight="bold">{day}</Text>
-              </Flex>
-            </GridItem>
-          ))}
-          {TIMES.map((time, timeIndex) => (
-            <Fragment key={`시간-${timeIndex + 1}`}>
-              <GridItem
-                borderTop="1px solid"
-                borderColor="gray.300"
-                bg={timeIndex > 17 ? 'gray.200' : 'gray.100'}
-              >
-                <Flex justifyContent="center" alignItems="center" h="full">
-                  <Text fontSize="xs">
-                    {fill2(timeIndex + 1)} ({time})
-                  </Text>
-                </Flex>
-              </GridItem>
-              {DAY_LABELS.map((day) => (
-                <GridItem
-                  key={`${day}-${timeIndex + 2}`}
-                  borderWidth="1px 0 0 1px"
-                  borderColor="gray.300"
-                  bg={timeIndex > 17 ? 'gray.100' : 'white'}
-                  cursor="pointer"
-                  _hover={{ bg: 'yellow.100' }}
-                  onClick={() => onScheduleTimeClick?.({ day, time: timeIndex + 1 })}
-                />
-              ))}
-            </Fragment>
-          ))}
+          <ScheduleTableHeader onScheduleTimeClick={onScheduleTimeClick} />
         </Grid>
 
         {schedules.map((schedule, index) => (

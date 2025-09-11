@@ -18,8 +18,6 @@ export const ScheduleTables = () => {
   const { schedulesMap, setSchedulesMap } = useScheduleContext();
   const [searchInfo, setSearchInfo] = useState<SearchInfo | null>(null);
 
-  console.log('배로 테스트');
-
   const disabledRemoveButton = Object.keys(schedulesMap).length === 1;
 
   const openSearchDialog = useCallback((tableId: string, timeInfo: TimeSlotInfo) => {

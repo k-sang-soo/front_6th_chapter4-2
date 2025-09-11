@@ -2,8 +2,7 @@ import { DndContext, Modifier, PointerSensor, useSensor, useSensors } from '@dnd
 import { PropsWithChildren, useCallback } from 'react';
 import { CellSize, DAY_LABELS } from './constants.ts';
 import { useScheduleContext } from './ScheduleContext.tsx';
-import { useActiveTable } from './ActiveTableContext.tsx';
-import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core/dist/types';
+import type { DragEndEvent } from '@dnd-kit/core/dist/types';
 
 function createSnapModifier(): Modifier {
   return ({ transform, containerNodeRect, draggingNodeRect }) => {
@@ -34,23 +33,12 @@ const modifiers = [createSnapModifier()];
 
 export default function ScheduleDndProvider({ children }: PropsWithChildren) {
   const { schedulesMap, setSchedulesMap } = useScheduleContext();
-  const { setActiveTableId } = useActiveTable();
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
         distance: 8,
       },
     }),
-  );
-
-  const handleDragStart = useCallback(
-    (event: DragStartEvent) => {
-      const activeId = event.active?.id;
-      if (activeId) {
-        setActiveTableId(String(activeId).split(':')[0]);
-      }
-    },
-    [setActiveTableId],
   );
 
   const handleDragEnd = useCallback(
@@ -79,20 +67,12 @@ export default function ScheduleDndProvider({ children }: PropsWithChildren) {
           };
         }),
       }));
-
-      // 드래그 종료시 activeTableId를 null로 설정
-      setActiveTableId(null);
     },
-    [schedulesMap, setActiveTableId, setSchedulesMap],
+    [schedulesMap, setSchedulesMap],
   );
 
   return (
-    <DndContext
-      sensors={sensors}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-      modifiers={modifiers}
-    >
+    <DndContext sensors={sensors} onDragEnd={handleDragEnd} modifiers={modifiers}>
       {children}
     </DndContext>
   );
